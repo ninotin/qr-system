@@ -1,12 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-
-<title>QR受付アプリ</title>
-
-<!-- QRスキャンライブラリ -->
 <script src="https://unpkg.com/html5-qrcode@2.3.8"></script>
 
 <style>
@@ -20,30 +15,37 @@ body {
   margin: 20px auto;
 }
 
-button {
-  font-size: 18px;
-  padding: 12px;
-  margin: 10px;
+#result {
+  margin-top: 20px;
+  font-size: 24px;
+  font-weight: bold;
 }
+
+.ok { color: green; }
+.ng { color: red; }
 </style>
 </head>
 
 <body>
 
-<h2>QR受付アプリ</h2>
+<h2>QR受付</h2>
 
 <button id="start">📷 スキャン開始</button>
 
 <div id="reader"></div>
+<div id="result"></div>
 
 <script>
-
-let scanner;
 let scanned = false;
+let scanner;
+
+// 音（任意）
+const beepOk = new Audio("https://actions.google.com/sounds/v1/cartoon/clang_and_wobble.ogg");
+const beepNg = new Audio("https://actions.google.com/sounds/v1/cartoon/boing.ogg");
 
 document.getElementById("start").addEventListener("click", () => {
 
-  scanned = false;
+  if (scanner) return;
 
   scanner = new Html5QrcodeScanner("reader", {
     fps: 10,
@@ -51,52 +53,42 @@ document.getElementById("start").addEventListener("click", () => {
   });
 
   scanner.render(onScanSuccess);
-
 });
 
 function onScanSuccess(decodedText) {
 
-  // 連続スキャン防止
   if (scanned) return;
   scanned = true;
 
-  // QRの中身（URL）
-  const url = decodedText;
-
-  // 安全チェック（GASのみ許可）
-  if (!url.startsWith("https://script.google.com")) {
-    alert("QRコードが不正です");
-    scanned = false;
-    return;
-  }
-
-  // 読み取り停止（任意）
-  scanner.clear();
-
-  fetch(url)
+  fetch(decodedText)
     .then(res => res.text())
-    .then(result => {
+    .then(html => {
 
-      if (result === "OK") {
-        alert("OK 入場");
-      } else if (result === "USED") {
-        alert("使用済みです");
+      const resultDiv = document.getElementById("result");
+
+      // 結果を表示
+      resultDiv.innerHTML = html;
+
+      // 判定（簡易）
+      if (html.includes("OK")) {
+        resultDiv.className = "ok";
+        beepOk.play();
       } else {
-        alert("無効なQRです");
+        resultDiv.className = "ng";
+        beepNg.play();
       }
+
+      // 3秒後に次の受付可能
+      setTimeout(() => {
+        scanned = false;
+        resultDiv.innerHTML = "";
+      }, 3000);
 
     })
     .catch(() => {
       alert("通信エラー");
+      scanned = false;
     });
-
-}
-
-</script>
-
-<script>
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('service-worker.js');
 }
 </script>
 
