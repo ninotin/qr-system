@@ -6,10 +6,7 @@
 
 <title>QR受付アプリ</title>
 
-<!-- PWA設定 -->
-<link rel="manifest" href="manifest.json">
-
-<!-- QRスキャン -->
+<!-- QRスキャンライブラリ -->
 <script src="https://unpkg.com/html5-qrcode@2.3.8"></script>
 
 <style>
@@ -20,7 +17,7 @@ body {
 
 #reader {
   width: 300px;
-  margin: auto;
+  margin: 20px auto;
 }
 
 button {
@@ -41,41 +38,59 @@ button {
 
 <script>
 
-const GAS_URL = "https://script.google.com/macros/s/【デプロイID】/exec";
+let scanner;
+let scanned = false;
 
 document.getElementById("start").addEventListener("click", () => {
 
-  const scanner = new Html5QrcodeScanner("reader", {
+  scanned = false;
+
+  scanner = new Html5QrcodeScanner("reader", {
     fps: 10,
     qrbox: 250
   });
 
-  scanner.render((decodedText) => {
-
-    const id = decodedText.match(/id=(\d+)/)?.[1];
-
-    if (!id) {
-      alert("QRエラー");
-      return;
-    }
-
-    fetch(GAS_URL + "?id=" + id)
-      .then(res => res.text())
-      .then(result => {
-
-        if (result === "OK") {
-          alert("OK 入場");
-        } else if (result === "USED") {
-          alert("使用済");
-        } else {
-          alert("無効");
-        }
-
-      });
-
-  });
+  scanner.render(onScanSuccess);
 
 });
+
+function onScanSuccess(decodedText) {
+
+  // 連続スキャン防止
+  if (scanned) return;
+  scanned = true;
+
+  // QRの中身（URL）
+  const url = decodedText;
+
+  // 安全チェック（GASのみ許可）
+  if (!url.startsWith("https://script.google.com")) {
+    alert("QRコードが不正です");
+    scanned = false;
+    return;
+  }
+
+  // 読み取り停止（任意）
+  scanner.clear();
+
+  fetch(url)
+    .then(res => res.text())
+    .then(result => {
+
+      if (result === "OK") {
+        alert("OK 入場");
+      } else if (result === "USED") {
+        alert("使用済みです");
+      } else {
+        alert("無効なQRです");
+      }
+
+    })
+    .catch(() => {
+      alert("通信エラー");
+    });
+
+}
 
 </script>
 
