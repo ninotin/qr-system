@@ -1,44 +1,3 @@
-<!DOCTYPE html>
-<html>
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-
-<title>QR受付アプリ</title>
-
-<!-- PWA設定 -->
-<link rel="manifest" href="manifest.json">
-
-<!-- QRスキャン -->
-<script src="https://unpkg.com/html5-qrcode@2.3.8"></script>
-
-<style>
-body {
-  font-family: sans-serif;
-  text-align: center;
-}
-
-#reader {
-  width: 300px;
-  margin: auto;
-}
-
-button {
-  font-size: 18px;
-  padding: 12px;
-  margin: 10px;
-}
-</style>
-</head>
-
-<body>
-
-<h2>QR受付アプリ</h2>
-
-<button id="start">📷 スキャン開始</button>
-
-<div id="reader"></div>
-
 <script>
 
 const GAS_URL = "https://script.google.com/macros/s/XXX/exec";
@@ -53,53 +12,37 @@ scanner.render(
 
     console.log("QR:", decodedText);
 
-    try {
+    const id = decodedText.match(/id=(\d+)/)?.[1];
 
-      const id = decodedText.match(/id=(\d+)/)?.[1];
-
-      if (!id) {
-        alert("QRにIDがありません");
-        return;
-      }
-
-      fetch(GAS_URL + "?id=" + id)
-        .then(res => res.text())
-        .then(result => {
-
-          console.log("GAS:", result);
-
-          if (result === "OK") {
-            alert("OK 入場");
-          } else if (result === "USED") {
-            alert("使用済");
-          } else {
-            alert("NG");
-          }
-
-        })
-        .catch(err => {
-          alert("通信エラー");
-          console.log(err);
-        });
-
-    } catch (e) {
-      alert("処理エラー");
-      console.log(e);
+    if (!id) {
+      alert("QRにIDがありません");
+      return;
     }
+
+    fetch(GAS_URL + "?id=" + id)
+      .then(res => res.text())
+      .then(result => {
+
+        console.log("GAS:", result);
+
+        if (result === "OK") {
+          alert("OK 入場");
+        } else if (result === "USED") {
+          alert("使用済");
+        } else {
+          alert("NG");
+        }
+
+      })
+      .catch(err => {
+        alert("通信エラー");
+        console.log(err);
+      });
 
   },
   (error) => {
-    // 無視してOK（毎フレーム出るため）
+    // エラーは無視でOK
   }
 );
 
-  fetch(GAS_URL + "?id=" + id)
-    .then(res => res.text())
-    .then(r => alert(r));
-
-});
-
 </script>
-
-</body>
-</html>
