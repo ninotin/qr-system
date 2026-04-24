@@ -1,53 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
 <script src="https://unpkg.com/html5-qrcode@2.3.8"></script>
+</head>
+
+<body>
+
 <button id="start">スキャン開始</button>
 <div id="reader"></div>
+
 <script>
 
-const GAS_URL = "https://script.google.com/macros/s/XXX/exec";
-
 document.getElementById("start").addEventListener("click", () => {
-
   const scanner = new Html5QrcodeScanner("reader", {
     fps: 10,
     qrbox: 250
   });
 
-  scanner.render(
-    (decodedText) => {
-
-      console.log("QR:", decodedText);
-
-      const id = decodedText.match(/id=(\d+)/)?.[1];
-
-      if (!id) {
-        alert("QRにIDがありません");
-        return;
-      }
-
-      fetch(GAS_URL + "?id=" + id)
-        .then(res => res.text())
-        .then(result => {
-
-          console.log("GAS:", result);
-
-          if (result === "OK") {
-            alert("OK 入場");
-          } else if (result === "USED") {
-            alert("使用済");
-          } else {
-            alert("NG");
-          }
-
-        })
-        .catch(err => {
-          alert("通信エラー");
-          console.log(err);
-        });
-
-    },
-    (error) => {}
-  );
-
+  scanner.render((decodedText) => {
+    alert(decodedText);
+  });
 });
 
 </script>
+
+</body>
+</html>
